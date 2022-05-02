@@ -105,6 +105,7 @@ rule Token = parse
   | '-'                   { Parser.MINUS  (getPos lexbuf) }
   | '*'                   { Parser.TIMES  (getPos lexbuf) }
   | '/'                   { Parser.DIVIDE  (getPos lexbuf) }
+  | '~'                   { Parser.NEGATE  (getPos lexbuf) }
   | "=>"                  { Parser.ARROW  (getPos lexbuf) }
   | "=="                  { Parser.DEQ    (getPos lexbuf) }
   | '='                   { Parser.EQ     (getPos lexbuf) }

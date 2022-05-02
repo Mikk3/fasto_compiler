@@ -146,8 +146,11 @@ and checkExp  (ftab : FunTable)
     | Not (_, _) ->
         failwith "Unimplemented type check of not"
 
-    | Negate (_, _) ->
-        failwith "Unimplemented type check of negate"
+    | Negate (e1, pos) ->
+        let (t, e1_dec) = checkExp ftab vtab e1
+        match (t) with
+        | Int _ ->  (Int, Negate (e1_dec, pos))
+        | (_) -> failwith "Hej"
 
     (* The types for e1, e2 must be the same. The result is always a Bool. *)
     | Equal (e1, e2, pos) ->

@@ -280,8 +280,19 @@ let rec compileExp  (e      : TypedExp)
   | Not (_, _) ->
       failwith "Unimplemented code generation of not"
 
-  | Negate (_, _) ->
-      failwith "Unimplemented code generation of negate"
+  (*
+      Using the fact that bitwise XOR
+      11111111111111111111
+      00001010011110111101
+      =
+      11110101100001000010
+      Results in a negated integer
+
+  *) 
+  | Negate (e1, pos) ->
+      let t1 = newReg "negate"
+      let code1 = compileExp e1 vtable t1
+      code1 @ [ Mips.XORI(place, t1, int -1) ]
 
   | Let (dec, e1, pos) ->
       let (code1, vtable1) = compileDec dec vtable
