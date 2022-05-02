@@ -42,13 +42,16 @@ let parse_error_rich =
 %token <Position> IF THEN ELSE LET IN EOF
 %token <Position> INT CHAR BOOL
 %token <Position> PLUS MINUS TIMES DIVIDE LESS
-%token <Position> NEGATE
+%token <Position> NEGATE AND
 %token <Position> DEQ LTH EQ OP MAP REDUCE IOTA ARROW
 %token <Position> FUN FN COMMA SEMICOLON READ WRITE
 %token <Position> LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
 
 // Precedence is given by order (low to high)
 %nonassoc ifprec letprec
+//%left OR
+%left AND
+//%left NOT
 %left DEQ LTH
 %left PLUS MINUS
 %left TIMES DIVIDE
@@ -109,14 +112,22 @@ Exp : NUM            { Constant (IntVal (fst $1), snd $1) }
     | ID             { Var $1 }
     | STRINGLIT      { StringLit $1 }
     | LCURLY Exps RCURLY
-                     { ArrayLit ($2, (), $1) }
+                         { ArrayLit ($2, (), $1) }
+    // Arithmetic operations
     | Exp PLUS  Exp  { Plus ($1, $3, $2) }
     | Exp MINUS Exp  { Minus ($1, $3, $2) }
     | Exp TIMES Exp  { Times ($1, $3, $2) }
     | Exp DIVIDE Exp { Divide ($1, $3, $2) }
+
+    // Negation
     | NEGATE Exp     { Negate ($2, $1) }
+
+    // Boolean operators
+    | Exp AND Exp    { And ($1, $3, $2) }
     | Exp DEQ   Exp  { Equal($1, $3, $2) }
     | Exp LTH   Exp  { Less ($1, $3, $2) }
+
+    // Other stuff
     | IF Exp THEN Exp ELSE Exp %prec ifprec
                      { If ($2, $4, $6, $1) }
     | ID LPAR Exps RPAR

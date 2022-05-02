@@ -108,6 +108,7 @@ rule Token = parse
   | '~'                   { Parser.NEGATE  (getPos lexbuf) }
   | "=>"                  { Parser.ARROW  (getPos lexbuf) }
   | "=="                  { Parser.DEQ    (getPos lexbuf) }
+  | "&&"                  { Parser.AND    (getPos lexbuf)  }
   | '='                   { Parser.EQ     (getPos lexbuf) }
   | '<'                   { Parser.LTH    (getPos lexbuf) }
   | '('                   { Parser.LPAR   (getPos lexbuf) }
