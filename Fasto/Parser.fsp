@@ -39,6 +39,7 @@ let parse_error_rich =
 %token <int * Position> NUM
 %token <char * Position> CHARLIT
 %token <string * Position> ID STRINGLIT
+%token <Position> TRUE FALSE
 %token <Position> IF THEN ELSE LET IN EOF
 %token <Position> INT CHAR BOOL
 %token <Position> PLUS MINUS TIMES DIVIDE LESS
@@ -109,6 +110,8 @@ BinOp : PLUS  { (Lambda
 
 Exp : NUM            { Constant (IntVal (fst $1), snd $1) }
     | CHARLIT        { Constant (CharVal (fst $1), snd $1) }
+    | TRUE           { Constant (BoolVal true, $1) }
+    | FALSE          { Constant (BoolVal false, $1) }
     | ID             { Var $1 }
     | STRINGLIT      { StringLit $1 }
     | LCURLY Exps RCURLY

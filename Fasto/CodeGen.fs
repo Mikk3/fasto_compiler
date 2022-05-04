@@ -194,8 +194,10 @@ let rec compileExp  (e      : TypedExp)
         [ Mips.LUI (place, n / 65536)
         ; Mips.ORI (place, place, n % 65536) ]
   | Constant (BoolVal p, _) ->
-      (* TODO project task 1: represent `true`/`false` values as `1`/`0` *)
-      failwith "Unimplemented code generation of boolean constants"
+        match p with
+        | true  -> [ Mips.LI (place, int 1)]
+        | false -> [ Mips.LI (place, int 0)]
+        
   | Constant (CharVal c, pos) -> [ Mips.LI (place, int c) ]
 
   (* Create/return a label here, collect all string literals of the program
@@ -275,6 +277,7 @@ let rec compileExp  (e      : TypedExp)
       let t2 = newReg "divide_R"
       let code1 = compileExp e1 vtable t1
       let code2 = compileExp e2 vtable t2
+      // TODO: check for division by zero
       code1 @ code2 @ [Mips.DIV (place,t1,t2)]
 
   | Not (e1, pos) ->
@@ -282,15 +285,6 @@ let rec compileExp  (e      : TypedExp)
       let code1 = compileExp e1 vtable t1
       code1 @ [ Mips.XORI(place, t1, int 1) ]
 
-  (*
-      Using the fact that bitwise XOR
-      11111111111111111111
-      00001010011110111101
-      =
-      11110101100001000010
-      Results in a negated integer
-
-  *) 
   | Negate (e1, pos) ->
       let t1 = newReg "negate"
       let code1 = compileExp e1 vtable t1

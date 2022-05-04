@@ -188,7 +188,6 @@ let rec evalExp (e : UntypedExp, vtab : VarTable, ftab : FunTable) : Value =
         | (BoolVal b) -> BoolVal (not b)
         | (_) -> reportWrongType "operand of NOT" Bool res1 (expPos e1)
         
-        
   | Negate(e1, pos) ->
         let res1   = evalExp(e1, vtab, ftab)
         match (res1) with
