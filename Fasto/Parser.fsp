@@ -42,14 +42,14 @@ let parse_error_rich =
 %token <Position> IF THEN ELSE LET IN EOF
 %token <Position> INT CHAR BOOL
 %token <Position> PLUS MINUS TIMES DIVIDE LESS
-%token <Position> NEGATE AND
+%token <Position> NEGATE AND OR
 %token <Position> DEQ LTH EQ OP MAP REDUCE IOTA ARROW
 %token <Position> FUN FN COMMA SEMICOLON READ WRITE
 %token <Position> LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
 
 // Precedence is given by order (low to high)
 %nonassoc ifprec letprec
-//%left OR
+%left OR
 %left AND
 //%left NOT
 %left DEQ LTH
@@ -124,6 +124,7 @@ Exp : NUM            { Constant (IntVal (fst $1), snd $1) }
 
     // Boolean operators
     | Exp AND Exp    { And ($1, $3, $2) }
+    | Exp OR Exp    { Or ($1, $3, $2) }
     | Exp DEQ   Exp  { Equal($1, $3, $2) }
     | Exp LTH   Exp  { Less ($1, $3, $2) }
 

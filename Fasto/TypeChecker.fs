@@ -146,8 +146,15 @@ and checkExp  (ftab : FunTable)
         | (_, Bool _) -> reportTypeWrong "left argument of &&" Bool t1 pos
         | _ -> reportOther "Types of && must be of type Bool" pos
 
-    | Or (_, _, _) ->
-        failwith "Unimplemented type check of ||"
+    | Or (e1, e2, pos) ->
+        let (t1, e1_dec) = checkExp ftab vtab e1
+        let (t2, e2_dec) = checkExp ftab vtab e2
+        match (t1, t2) with
+        | (Bool _, Bool _) -> (Bool, Or (e1_dec, e2_dec, pos))
+        | (Bool _, _) -> reportTypeWrong "Right argument of ||" Bool t2 pos
+        | (_, Bool _) -> reportTypeWrong "left argument of ||" Bool t1 pos
+        | _ -> reportOther "Types of || must be of type Bool" pos
+        
 
     | Not (_, _) ->
         failwith "Unimplemented type check of not"
