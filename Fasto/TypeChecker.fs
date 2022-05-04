@@ -150,7 +150,7 @@ and checkExp  (ftab : FunTable)
         let (t, e1_dec) = checkExp ftab vtab e1
         match (t) with
         | Int _ ->  (Int, Negate (e1_dec, pos))
-        | (_) -> failwith "Hej"
+        | (_) -> reportTypeWrong "negation" Int t pos
 
     (* The types for e1, e2 must be the same. The result is always a Bool. *)
     | Equal (e1, e2, pos) ->
