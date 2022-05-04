@@ -277,8 +277,10 @@ let rec compileExp  (e      : TypedExp)
       let code2 = compileExp e2 vtable t2
       code1 @ code2 @ [Mips.DIV (place,t1,t2)]
 
-  | Not (_, _) ->
-      failwith "Unimplemented code generation of not"
+  | Not (e1, pos) ->
+      let t1 = newReg "not"
+      let code1 = compileExp e1 vtable t1
+      code1 @ [ Mips.XORI(place, t1, int 1) ]
 
   (*
       Using the fact that bitwise XOR

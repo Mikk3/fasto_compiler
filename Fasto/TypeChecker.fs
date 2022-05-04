@@ -156,8 +156,11 @@ and checkExp  (ftab : FunTable)
         | _ -> reportOther "Types of || must be of type Bool" pos
         
 
-    | Not (_, _) ->
-        failwith "Unimplemented type check of not"
+    | Not (e1, pos) ->
+        let (t, e1_dec) = checkExp ftab vtab e1
+        match (t) with
+        | Bool _ ->  (Bool, Not (e1_dec, pos))
+        | (_) -> reportTypeWrong "Not" Bool t pos
 
     | Negate (e1, pos) ->
         let (t, e1_dec) = checkExp ftab vtab e1

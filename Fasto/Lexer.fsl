@@ -63,6 +63,7 @@ let keyword (s, pos) =
        | "fun"          -> Parser.FUN pos
        | "fn"           -> Parser.FN pos
        | "op"           -> Parser.OP pos
+       | "not"          -> Parser.NOT pos
 
 (* specials: *)
        | "iota"         -> Parser.IOTA pos
