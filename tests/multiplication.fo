@@ -1,8 +1,5 @@
 fun int main() =
   let x = read(int) in
   let y = read(int) in
-  let out = write(x + y * x) in
-  write(x / y)
-
-  //2 + 4 * 2
-  //2 + 8 = 10
+  let a = replicate(3, 'W') in let out = write(a) in
+  0

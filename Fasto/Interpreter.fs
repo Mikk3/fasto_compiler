@@ -285,8 +285,15 @@ let rec evalExp (e : UntypedExp, vtab : VarTable, ftab : FunTable) : Value =
          the value of `a`; otherwise raise an error (containing
          a meaningful message).
   *)
-  | Replicate (_, _, _, _) ->
-        failwith "Unimplemented interpretation of replicate"
+  | Replicate (nexp, aexp, _, pos) ->
+        let n = evalExp(nexp, vtab, ftab)
+        let elm = evalExp(aexp, vtab, ftab)
+        match n with 
+        | (IntVal n) when n >= 0 -> 
+            let lst = List.replicate n elm
+            ArrayVal(lst, valueType(elm))
+        | (IntVal n) when n < 0 -> raise ( MyError($"Count must be greater or equal to 0", expPos nexp) )
+        | _ -> raise(reportWrongType "count" Int n pos) 
 
   (* TODO project task 2: `filter(p, arr)`
        pattern match the implementation of map:

@@ -613,8 +613,60 @@ let rec compileExp  (e      : TypedExp)
         If `n` is less than `0` then remember to terminate the program with
         an error -- see implementation of `iota`.
   *)
-  | Replicate (_, _, _, _) ->
-      failwith "Unimplemented code generation of replicate"
+  | Replicate (n_exp, a_exp, ret_type, (line , col)) ->
+      let size_reg = newReg "size_reg"  (* size of array *)
+
+      let n_code = compileExp n_exp vtable size_reg // size_reg is now the integer n
+
+      let elm_reg = newReg "elm_reg"
+      let elm_code = compileExp a_exp vtable elm_reg
+
+      // Check that N is >= 0
+      let safe_lab = newLab "safe_lab"
+      let check_size = [ Mips.BGEZ (size_reg, safe_lab) 
+                      ; Mips.LI (RN5, line)
+                      ; Mips.LA (RN6, "_Msg_IllegalArraySize_")
+                      ; Mips.J "_RuntimeError_"
+                      ; Mips.LABEL (safe_lab)
+                      ]
+                      
+      // Allocate results array
+      let arr_code = dynalloc (size_reg, place, ret_type)
+      // Load the element_size
+      // move the addr_reg to the first element of the array
+      // set i_reg (loop counter) to 0
+      let addr_reg = newReg "addr_reg"
+      let i_reg = newReg "i_reg"
+      let elm_size_reg = newReg "elm_size_reg"
+      let init_regs = [ // Mips.LW(elm_size_reg, place, 0)
+                        Mips.ADDI (addr_reg, place, elemSizeToInt(getElemSize(ret_type))) // FIX THIS
+                      ; Mips.MOVE (i_reg, RZ) ]
+      // Run loop
+      // Loop labels
+      let loop_beg = newLab "loop_beg"
+      let loop_end = newLab "loop_end"
+      let tmp_reg = newReg "tmp_reg"
+      // while (i_reg < size_reg)
+      let loop_header = [Mips.LABEL(loop_beg)
+                        ; Mips.SUB (tmp_reg, i_reg, size_reg)
+                        ; Mips.BGEZ (tmp_reg, loop_end)]
+      // arr[i] = a
+      let loop_code = [ Mips.SW (elm_reg, addr_reg, 0) ]
+      let loop_footer = [ Mips.ADDI(i_reg, i_reg, 1)
+        ; Mips.ADD(addr_reg, addr_reg, elm_size_reg)
+        ; Mips.J loop_beg
+        ; Mips.LABEL(loop_end)
+      ]
+
+      n_code
+        @ elm_code
+        @ check_size
+        @ arr_code
+        @ init_regs
+        @ loop_header
+        @ loop_code
+        @ loop_footer
+      
 
   (* TODO project task 2: see also the comment to replicate.
      (a) `filter(f, arr)`:  has some similarity with the implementation of map.
