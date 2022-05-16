@@ -693,8 +693,63 @@ let rec compileExp  (e      : TypedExp)
         the current location of the result iterator at every iteration of
         the loop.
   *)
-  | Scan (_, _, _, _, _) ->
-      failwith "Unimplemented code generation of scan"
+  // scan(f, ne, arr)
+  | Scan (funarg, ne_exp, arr_exp, tp, pos) ->
+      let arr_reg = newReg "arr_reg"    // address of array
+      let size_reg = newReg "size_reg"  // size of array
+      let ne_reg = newReg "ne_reg"      // accumulator 
+      let i_reg = newReg "i_reg"        // loop counter
+      let tmp_reg = newReg "tmp_reg"    // several purposes
+      let loop_beg = newLab "loop_beg"  // Loop labels
+      let loop_end = newLab "loop_end"
+
+      let elm_size_t = getElemSize tp
+
+      let arr_code = compileExp arr_exp vtable arr_reg
+      let ne_code = compileExp ne_exp vtable ne_reg
+
+      // Read array length from first 4 bytes
+      let get_length = [ Mips.LW(size_reg, arr_reg, 0) ]
+
+      // Allocate space for result array
+      let malloc = dynalloc (size_reg, place, tp)
+
+      // Pointer to result array
+      let addr_reg = newReg "addr_reg"
+
+      // Initialize Arrays and i:
+      //  addr_reg = first element of result_arr
+      //  arr_reg = first element of arr
+      //  i_reg = 0
+      let init_regs = [ Mips.ADDI (addr_reg, place, 4)
+                      ; Mips.ADDI (arr_reg, arr_reg, 4)
+                      ; Mips.MOVE (i_reg, RZ)
+                      ] 
+      // while (i_reg < size_reg)
+      let loop_header = [Mips.LABEL(loop_beg)
+                        ; Mips.SUB (tmp_reg, i_reg, size_reg)
+                        ; Mips.BGEZ (tmp_reg, loop_end)]
+      let loop_code = 
+        [ mipsLoad elm_size_t (tmp_reg, arr_reg, 0) ]                   // tmp = arr[i]
+        @ applyFunArg(funarg, [ne_reg; tmp_reg], vtable, ne_reg, pos)   // reg_ne = funarg(ne, tmp)
+        @ [ mipsStore elm_size_t (ne_reg, addr_reg, 0) ]                // res_arr[i] = ne_reg
+
+      let loop_footer = [
+        Mips.ADDI(arr_reg, arr_reg, elemSizeToInt elm_size_t)     // sets arr_reg to point at next element
+        ; Mips.ADDI(addr_reg, addr_reg, elemSizeToInt elm_size_t) // sets addr_reg to point at next element
+        ; Mips.ADDI(i_reg, i_reg, 1)                              // increment i_reg
+        ; Mips.J loop_beg
+        ; Mips.LABEL(loop_end)
+      ]
+
+      arr_code
+        @ ne_code
+        @ get_length
+        @ malloc
+        @ init_regs
+        @ loop_header
+        @ loop_code
+        @ loop_footer
 
 and applyFunArg ( ff     : TypedFunArg
                 , args   : Mips.reg list

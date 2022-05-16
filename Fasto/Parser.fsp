@@ -47,7 +47,7 @@ let parse_error_rich =
 %token <Position> DEQ LTH EQ OP MAP REDUCE IOTA ARROW
 %token <Position> FUN FN COMMA SEMICOLON READ WRITE
 %token <Position> LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
-%token <Position> REPLICATE
+%token <Position> REPLICATE SCAN
 
 // Precedence is given by order (low to high)
 %nonassoc ifprec letprec
@@ -147,6 +147,8 @@ Exp : NUM            { Constant (IntVal (fst $1), snd $1) }
     // Array combinators
     | REPLICATE LPAR Exp COMMA Exp RPAR
                      { Replicate ($3, $5, (), $1)  }
+    | SCAN LPAR FunArg COMMA Exp COMMA Exp RPAR
+                     { Scan ($3, $5, $7, (), $1) } 
     | IOTA LPAR Exp RPAR
                      { Iota ($3, $1) }
     | MAP LPAR FunArg COMMA Exp RPAR
