@@ -272,13 +272,21 @@ let rec compileExp  (e      : TypedExp)
       let code2 = compileExp e2 vtable t2
       code1 @ code2 @ [Mips.MUL (place,t1,t2)]
 
-  | Divide (e1, e2, pos) ->
+  | Divide (e1, e2, (line, _)) ->
       let t1 = newReg "divide_L"
       let t2 = newReg "divide_R"
       let code1 = compileExp e1 vtable t1
       let code2 = compileExp e2 vtable t2
-      // TODO: check for division by zero
-      code1 @ code2 @ [Mips.DIV (place,t1,t2)]
+      // check for division by zero
+      // _Msg_DivZero_
+      let safe_lab = newLab "safe_lab"
+      let checkDivZero = [ Mips.BNE (t2, RZ, safe_lab) // if t2 != 0 then safe_lab else error()
+                          ; Mips.LI (RN5, line)
+                          ; Mips.LA (RN6, "_Msg_DivZero_")
+                          ; Mips.J "_RuntimeError_"
+                          ; Mips.LABEL (safe_lab)
+                         ]
+      code2 @ checkDivZero @ code1 @ [Mips.DIV (place,t1,t2)]
 
   | Not (e1, pos) ->
       let t1 = newReg "not"
