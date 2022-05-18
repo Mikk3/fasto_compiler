@@ -695,6 +695,7 @@ let rec compileExp  (e      : TypedExp)
       let arr_reg = newReg "arr_reg"      // address of array
       let size_reg = newReg "size_reg"    // size of array
       let i_reg = newReg "i_reg"          // loop counter
+      let outi_reg = newReg "outi_reg"    // loop counter for output array
       let res_reg = newReg "res_reg"      // Pointer to result array
       let elm_reg = newReg "elm_reg"      // Point to element in array
       let tmp_reg = newReg "tmp_reg"      // temporary register
@@ -720,6 +721,7 @@ let rec compileExp  (e      : TypedExp)
       // out_i = 0
       let init_regs = [ Mips.ADDI (res_reg, place, 4) 
                       ; Mips.MOVE (i_reg, RZ)
+                      ; Mips.MOVE (outi_reg, RZ)
                       ; Mips.ADDI (arr_reg, arr_reg, 4) ]
 
       let loop_header = [ Mips.LABEL (loop_beg)
@@ -730,12 +732,15 @@ let rec compileExp  (e      : TypedExp)
                       @ applyFunArg (funarg, [elm_reg], vtable, tmp_reg, pos)
                       @ [ Mips.BEQ (tmp_reg, RZ, else_label)
                         ; mipsStore elm_size_t (elm_reg, res_reg, 0) 
-                        ; Mips.ADDI (res_reg, res_reg, elemSizeToInt elm_size_t) 
+                        ; Mips.ADDI (res_reg, res_reg, elemSizeToInt elm_size_t)
+                        ; Mips.ADDI (outi_reg, outi_reg, 1)
                         ; Mips.LABEL (else_label) ]
       let loop_footer = [ Mips.ADDI (i_reg, i_reg, 1) 
                           ; Mips.ADDI (arr_reg, arr_reg, elemSizeToInt elm_size_t) 
                           ; Mips.J loop_beg
                           ; Mips.LABEL (loop_end) ]
+
+      let update_Size = [ Mips.SW (outi_reg, place, 0)]
 
       arr_code
       @ get_length
@@ -744,6 +749,7 @@ let rec compileExp  (e      : TypedExp)
       @ loop_header
       @ loop_code
       @ loop_footer
+      @ update_Size
 
       
   (* TODO project task 2: see also the comment to replicate.
