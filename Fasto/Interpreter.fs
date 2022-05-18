@@ -31,6 +31,10 @@ exception MyError of string * Position
 type FunTable = SymTab.SymTab<UntypedFunDec>
 type VarTable = SymTab.SymTab<Value>
 
+let getBoolVal (v:Value) = 
+  match v with 
+  | BoolVal b -> b
+  | _ -> failwith "Other Values than bools not supported"
 (* Build a function table, which associates a function names with function
    declarations. *)
 let rec buildFtab (fdecs : UntypedFunDec list) : FunTable =
@@ -303,9 +307,19 @@ let rec evalExp (e : UntypedExp, vtab : VarTable, ftab : FunTable) : Value =
          under predicate `p`, i.e., `p(a) = true`;
        - create an `ArrayVal` from the (list) result of the previous step.
   *)
-  | Filter (_, _, _, _) ->
-        failwith "Unimplemented interpretation of filter"
+  | Filter (farg, arrexp, _, pos) ->
+      let arr  = evalExp(arrexp, vtab, ftab)
+      let farg_ret_type = rtpFunArg farg ftab pos
+      match farg_ret_type with
+        | Bool -> 
+          match arr with
+            | ArrayVal (lst, tp) ->  
+              let lst = List.filter (fun x -> getBoolVal(evalFunArg (farg, vtab, ftab, pos, [x]))) lst
+              ArrayVal (lst, tp)
+            | _ -> reportNonArray "1st argument of \"filter\"" arr pos
+        | t -> raise (MyError("Filter predicate wrong return type. Expected bool but got " + ppType(t), pos))
 
+  
   (* TODO project task 2: `scan(f, ne, arr)`
      Implementation similar to reduce, except that it produces an array
      of the same type and length to the input array `arr`.

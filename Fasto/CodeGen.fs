@@ -691,9 +691,61 @@ let rec compileExp  (e      : TypedExp)
          counter computed in step (c). You do this of course with a
          `Mips.SW(counter_reg, place, 0)` instruction.
   *)
-  | Filter (_, _, _, _) ->
-      failwith "Unimplemented code generation of filter"
+  | Filter (funarg, arr_exp, tp, pos) ->
+      let arr_reg = newReg "arr_reg"      // address of array
+      let size_reg = newReg "size_reg"    // size of array
+      let i_reg = newReg "i_reg"          // loop counter
+      let res_reg = newReg "res_reg"      // Pointer to result array
+      let elm_reg = newReg "elm_reg"      // Point to element in array
+      let tmp_reg = newReg "tmp_reg"      // temporary register
+      let loop_beg = newLab "loop_beg"    // Loop labels
+      let loop_end = newLab "loop_end"
+      let else_label = newLab "else_label"
 
+      let elm_size_t = getElemSize tp 
+      
+      let arr_code = compileExp arr_exp vtable arr_reg
+      
+      // Read array length from first 4 bytes
+      let get_length = [ Mips.LW(size_reg, arr_reg, 0) ]
+
+      // Allocate space for result array
+      // Might cause fragmentation, since not all elements necessarily
+      // gets added to output array. TA told this was okay.
+      let malloc = dynalloc (size_reg, place, tp)
+
+      // init
+      // res_reg & arr_reg ponits to first element
+      // i = 0
+      // out_i = 0
+      let init_regs = [ Mips.ADDI (res_reg, place, 4) 
+                      ; Mips.MOVE (i_reg, RZ)
+                      ; Mips.ADDI (arr_reg, arr_reg, 4) ]
+
+      let loop_header = [ Mips.LABEL (loop_beg)
+                        ; Mips.SUB (tmp_reg, i_reg, size_reg)
+                        ; Mips.BGEZ (tmp_reg, loop_end)]
+
+      let loop_code = [ mipsLoad elm_size_t (elm_reg, arr_reg, 0) ]
+                      @ applyFunArg (funarg, [elm_reg], vtable, tmp_reg, pos)
+                      @ [ Mips.BEQ (tmp_reg, RZ, else_label)
+                        ; mipsStore elm_size_t (elm_reg, res_reg, 0) 
+                        ; Mips.ADDI (res_reg, res_reg, elemSizeToInt elm_size_t) 
+                        ; Mips.LABEL (else_label) ]
+      let loop_footer = [ Mips.ADDI (i_reg, i_reg, 1) 
+                          ; Mips.ADDI (arr_reg, arr_reg, elemSizeToInt elm_size_t) 
+                          ; Mips.J loop_beg
+                          ; Mips.LABEL (loop_end) ]
+
+      arr_code
+      @ get_length
+      @ malloc
+      @ init_regs
+      @ loop_header
+      @ loop_code
+      @ loop_footer
+
+      
   (* TODO project task 2: see also the comment to replicate.
      `scan(f, ne, arr)`: you can inspire yourself from the implementation of
         `reduce`, but in the case of `scan` you will need to also maintain
