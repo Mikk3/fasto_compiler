@@ -1,0 +1,11 @@
+fun int main() =
+    let out = write(false && true) in //false
+    let out = write(true && true) in // true
+    let out = write(true || false) in //true
+    let out = write(false || false) in // false
+    let out = write(not false) in //true
+    let out = write(not true) in // false
+    let out = write(0<1 && 0<1) in //true
+    let out = write(1<0 || 0<1) in //true
+    0
+
