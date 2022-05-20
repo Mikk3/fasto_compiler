@@ -5,4 +5,7 @@ fun int writeInt(int n) = write(n)
 fun [int] main() =
   let a = {1, 2, 3} in
   let b = scan(incr, 0, a) in
-  map(writeInt, b)
+  let c = scan(fn int (int x, int y) => x + y, 0, a) in
+  let out = map(writeInt, b) in
+  map(writeInt, c)
+
