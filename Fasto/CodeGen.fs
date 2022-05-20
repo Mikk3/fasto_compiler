@@ -415,16 +415,34 @@ let rec compileExp  (e      : TypedExp)
   | And (e1, e2, pos) ->
       let t1 = newReg "and_L"
       let t2 = newReg "and_R"
+      let short_circuit = newLab "short_circuit"
       let code1 = compileExp e1 vtable t1
       let code2 = compileExp e2 vtable t2
-      code1 @ code2 @ [Mips.AND(place,t1,t2)]
+
+      let first_and = [
+        Mips.LI(place, 0)
+        ; Mips.BEQ(t1, RZ, short_circuit)
+      ]
+
+      let second_and = [ Mips.MOVE(place, t2) ]
+
+      code1 @ first_and @ code2 @ second_and @ [Mips.LABEL short_circuit]
 
   | Or (e1, e2, pos) ->
     let t1 = newReg "or_L"
     let t2 = newReg "or_R"
+    let short_circuit = newLab "short_circuit"
     let code1 = compileExp e1 vtable t1
     let code2 = compileExp e2 vtable t2
-    code1 @ code2 @ [Mips.OR(place,t1,t2)]
+
+    let first_or = [
+        Mips.LI(place, 1)
+        ; Mips.BNE(t1, RZ, short_circuit)
+      ]
+
+    let second_or = [ Mips.MOVE(place, t2) ]
+
+    code1 @ first_or @ code2 @ second_or @ [Mips.LABEL short_circuit]
 
   (* Indexing:
      1. generate code to compute the index
