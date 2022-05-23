@@ -62,13 +62,14 @@ let rec removeDeadBindingsInExp (e : TypedExp) : (bool * DBRtab * TypedExp) =
              ArrayLit (es', t, pos) )
         (* ToDO: Task 3: implement the cases of `Var`, `Index` and `Let` expressions below *)
         | Var (name, pos) ->
+            let new_symtab = SymTab.bind name () (SymTab.empty())
+            (false, new_symtab, Var (name, pos))
             (* Task 3, Hints for the `Var` case:
-                  - 1st element of result tuple: can a variable name contain IO?
+                  - 1st element of result tuple: can a variable name contain IO? 
                   - 2nd element of result tuple: you have discovered a name, hence
                         you need to record it in a new symbol table.
                   - 3rd element of the tuple: should be the optimised expression.
             *)
-            failwith "Unimplemented removeDeadBindingsInExp for Var"
         | Plus (x, y, pos) ->
             let (xios, xuses, x') = removeDeadBindingsInExp x
             let (yios, yuses, y') = removeDeadBindingsInExp y
@@ -118,10 +119,20 @@ let rec removeDeadBindingsInExp (e : TypedExp) : (bool * DBRtab * TypedExp) =
                         expression `e` and to propagate its results (in addition
                         to recording the use of `name`).
             *)
-            failwith "Unimplemented removeDeadBindingsInExp for Index"
+            let (ios1, uses1, e') = removeDeadBindingsInExp e
+            let new_symtab = SymTab.bind name () (SymTab.empty())
+            (ios1, SymTab.combine uses1 new_symtab, Index (name, e', t, pos))
 
         | Let (Dec (name, e, decpos), body, pos) ->
-            (* Task 3, Hints for the `Let` case:
+            let (ios_e, uses_e, e') = removeDeadBindingsInExp e
+            let (ios_body, uses_body, body') = removeDeadBindingsInExp body
+            
+            if (isUsed name uses_body) || ios_e then
+                ((ios_e || ios_body), (SymTab.combine uses_e uses_body), Let (Dec (name, e', decpos), body', pos))
+            else
+                (ios_body, uses_body,  body')            
+                
+                (* Task 3, Hints for the `Let` case:
                   - recursively process the `e` and `body` subexpressions
                     of the Let-binding
                   - a Let-binding contains IO if at least one of `e`
@@ -142,9 +153,7 @@ let rec removeDeadBindingsInExp (e : TypedExp) : (bool * DBRtab * TypedExp) =
                     used-variable table should describe the expression
                     *resulting* from the optmization, not the original
                     Let-expression.
-
             *)
-            failwith "Unimplemented removeDeadBindingsInExp for Let"
         | Iota (e, pos) ->
             let (io, uses, e') = removeDeadBindingsInExp e
             (io,
