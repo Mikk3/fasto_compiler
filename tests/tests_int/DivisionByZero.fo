@@ -1,0 +1,5 @@
+fun int main() = 
+    let x = 10 in
+    let y = 0 in
+    let z = 10 / 0 in
+    write(z)

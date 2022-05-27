@@ -316,12 +316,12 @@ and checkExp  (ftab : FunTable)
           of replicate is `[t]`
     *)
     | Replicate (nexp, aexp, _, pos) ->
-        let (n_type, n_exp_dec) = checkExp ftab vtab nexp
-        let (a_type, a_exp_dec) = checkExp ftab vtab aexp
-        if n_type <> Int then 
-          reportTypeWrong "first argument" Int n_type pos
-        else
-          (Array a_type, Replicate (n_exp_dec, a_exp_dec, a_type, pos))
+      let (n_type, n_exp_dec) = checkExp ftab vtab nexp
+      let (a_type, a_exp_dec) = checkExp ftab vtab aexp
+      if n_type <> Int then 
+        reportTypeWrong "first argument" Int n_type pos
+      else
+        (Array a_type, Replicate (n_exp_dec, a_exp_dec, a_type, pos))
 
 
 
@@ -348,7 +348,7 @@ and checkExp  (ftab : FunTable)
                 reportArityWrong "first argument of filter" 1 (args,Bool) pos
               | (_, res, _ ) when res <> Bool -> 
                 reportTypeWrongKind "first argument parameter" "Bool" res pos
-              | (_,_,_) -> reportOther "Something did not match the pattern at" pos
+              | (_,_,_) -> reportOther "function-argument in filter did not match pattern for \"a' -> Bool\"" pos
       if elem_type <> f_arg_type then
         reportTypesDifferent "function-argument and array-element types in filter" 
           f_arg_type elem_type pos
@@ -369,7 +369,7 @@ and checkExp  (ftab : FunTable)
           | _ -> reportTypeWrongKind "third argument of scan" "array" arr_type pos
       let (f', f_argres_type) =
         match checkFunArg ftab vtab pos f with
-        | (f', res, [a1; a2]) ->
+          | (f', res, [a1; a2]) ->
             if a1 <> a2 then
                 reportTypesDifferent "argument types of operation in scan"
                                     a1 a2 pos
@@ -377,7 +377,7 @@ and checkExp  (ftab : FunTable)
                 reportTypesDifferent "argument and return type of operation in scan"
                                     a1 res pos
             (f', res)
-        | (_, res, args) ->
+          | (_, res, args) ->
             reportArityWrong "operation in reduce" 2 (args,res) pos
       if elem_type <> f_argres_type then
         reportTypesDifferent "operation and array-element types in scan"
