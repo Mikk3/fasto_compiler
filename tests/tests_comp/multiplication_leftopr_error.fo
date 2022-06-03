@@ -1,5 +1,0 @@
-fun int main() =
-  let x = true in
-  let y = 5 in
-  let out = write( x * y ) in // true
-  0
