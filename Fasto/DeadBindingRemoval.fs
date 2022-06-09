@@ -60,16 +60,9 @@ let rec removeDeadBindingsInExp (e : TypedExp) : (bool * DBRtab * TypedExp) =
             (anytrue ios,
              List.fold SymTab.combine (SymTab.empty()) uses,
              ArrayLit (es', t, pos) )
-        (* ToDO: Task 3: implement the cases of `Var`, `Index` and `Let` expressions below *)
         | Var (name, pos) ->
             let new_symtab = SymTab.bind name () (SymTab.empty())
             (false, new_symtab, Var (name, pos))
-            (* Task 3, Hints for the `Var` case:
-                  - 1st element of result tuple: can a variable name contain IO? 
-                  - 2nd element of result tuple: you have discovered a name, hence
-                        you need to record it in a new symbol table.
-                  - 3rd element of the tuple: should be the optimised expression.
-            *)
         | Plus (x, y, pos) ->
             let (xios, xuses, x') = removeDeadBindingsInExp x
             let (yios, yuses, y') = removeDeadBindingsInExp y

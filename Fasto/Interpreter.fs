@@ -138,16 +138,6 @@ let rec evalExp (e : UntypedExp, vtab : VarTable, ftab : FunTable) : Value =
           | (IntVal n1, IntVal n2) -> IntVal (n1-n2)
           | (IntVal _, _) -> reportWrongType "right operand of -" Int res2 (expPos e2)
           | (_, _) -> reportWrongType "left operand of -" Int res1 (expPos e1)
-  (* TODO: project task 1:
-     Look in `AbSyn.fs` for the arguments of the `Times`
-     (`Divide`,...) expression constructors.
-        Implementation similar to the cases of Plus/Minus.
-        Try to pattern match the code above.
-        For `Divide`, remember to check for attempts to divide by zero.
-        For `And`/`Or`: make sure to implement the short-circuit semantics,
-        e.g., `And (e1, e2, pos)` should not evaluate `e2` if `e1` already
-              evaluates to false.
-  *)
   | Times(e1, e2, pos) ->
         let res1   = evalExp(e1, vtab, ftab)
         let res2   = evalExp(e2, vtab, ftab)
@@ -280,15 +270,6 @@ let rec evalExp (e : UntypedExp, vtab : VarTable, ftab : FunTable) : Value =
           | ArrayVal (lst,tp1) ->
                List.fold (fun acc x -> evalFunArg (farg, vtab, ftab, pos, [acc;x])) nel lst
           | otherwise -> reportNonArray "3rd argument of \"reduce\"" arr pos
-  (* TODO project task 2: `replicate(n, a)`
-     Look in `AbSyn.fs` for the arguments of the `Replicate`
-     (`Map`,`Scan`) expression constructors.
-       - evaluate `n` then evaluate `a`,
-       - check that `n` evaluates to an integer value >= 0
-       - If so then create an array containing `n` replicas of
-         the value of `a`; otherwise raise an error (containing
-         a meaningful message).
-  *)
   | Replicate (nexp, aexp, _, pos) ->
         let n = evalExp(nexp, vtab, ftab)
         let elm = evalExp(aexp, vtab, ftab)
@@ -298,32 +279,17 @@ let rec evalExp (e : UntypedExp, vtab : VarTable, ftab : FunTable) : Value =
             ArrayVal(lst, valueType(elm))
         | (IntVal n) when n < 0 -> raise ( MyError($"Count must be greater or equal to 0", expPos nexp) )
         | _ -> raise(reportWrongType "count" Int n pos) 
-
-  (* TODO project task 2: `filter(p, arr)`
-       pattern match the implementation of map:
-       - check that the function `p` result type (use `rtpFunArg`) is bool;
-       - evaluate `arr` and check that the (value) result corresponds to an array;
-       - use F# `List.filter` to keep only the elements `a` of `arr` which succeed
-         under predicate `p`, i.e., `p(a) = true`;
-       - create an `ArrayVal` from the (list) result of the previous step.
-  *)
   | Filter (farg, arrexp, _, pos) ->
       let arr  = evalExp(arrexp, vtab, ftab)
       let farg_ret_type = rtpFunArg farg ftab pos
       match farg_ret_type with
         | Bool -> 
-          match arr with
+            match arr with
             | ArrayVal (lst, tp) ->  
               let lst = List.filter (fun x -> getBoolVal(evalFunArg (farg, vtab, ftab, pos, [x]))) lst
               ArrayVal (lst, tp)
             | _ -> reportNonArray "1st argument of \"filter\"" arr pos
         | t -> raise (MyError("Filter predicate wrong return type. Expected bool but got " + ppType(t), pos))
-
-  
-  (* TODO project task 2: `scan(f, ne, arr)`
-     Implementation similar to reduce, except that it produces an array
-     of the same type and length to the input array `arr`.
-  *)
   | Scan (farg, neexp, arrexp, _, pos) ->
       let ne = evalExp(neexp, vtab, ftab)
       let arr = evalExp(arrexp, vtab, ftab)
