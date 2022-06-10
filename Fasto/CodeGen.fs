@@ -271,7 +271,6 @@ let rec compileExp  (e      : TypedExp)
       let code1 = compileExp e1 vtable t1
       let code2 = compileExp e2 vtable t2
       // check for division by zero
-      // _Msg_DivZero_
       let safe_lab = newLab "safe_lab"
       let checkDivZero = [ Mips.BNE (t2, RZ, safe_lab) // if t2 != 0 then safe_lab else error()
                           ; Mips.LI (RN5, line)
